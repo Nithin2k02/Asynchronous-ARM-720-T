@@ -21,6 +21,10 @@ reg write_enable_1;
 reg write_enable_2;
 reg write_enable_3;
 reg write_enable_4;
+reg read_enable_1;
+reg read_enable_2;
+reg read_enable_3;
+reg read_enable_4;
  
 
 reg[31:0] pc_update;
@@ -58,6 +62,10 @@ reg_sync RegisterFile(	//inputs
 							.write_enable_2(write_enable_2),
 							.write_enable_3(write_enable_3),
 							.write_enable_4(write_enable_4),
+							.read_enable_1(read_enable_1),
+							.read_enable_2(read_enable_2),
+							.read_enable_3(read_enable_3),
+							.read_enable_4(read_enable_4),
 							
 							.pc_update(pc_update), 
 							.pc_write(pc_write), 
@@ -104,8 +112,8 @@ initial begin
 	
 	#2 //[0,10) => delay of 10ns; [10,20) => delay of 20ns
 	write_address_1 = 4'b0000;
-    write_enable_1 = 1;
-    write_data_1 = 32'h00000002;
+   write_enable_1 = 1;
+   write_data_1 = 32'h00000002;
 
 	#20 // 
 	write_address_2 = 4'b0001;
@@ -114,21 +122,25 @@ initial begin
 
 	//$display("pc %h", pc);
 	#20
-	Rs = out_data_1; 
+	read_enable_1 = 1;
+	read_enable_2 = 1;
+	#15
+	Rs = out_data_1;
 	Rm = out_data_2; 
-	
+	#5 
 	repeat(30)  
 	begin
-	#5
+	#5 
 	write_address_3 = 4'b0010; //result address on address lines of reg
 	write_enable_3 = 1; //indicates result address is set
 	write_data_3 = result;	//write result in that reg
 	//write_enable_3 = 0;	//indicates writing is done
 	#15
-	Rm = out_data_3; //result placed on bus; given to multiplier
+	read_enable_3 = 1;
+	#10 Rm = out_data_3; //result placed on bus; given to multiplier
 	end
 
-	#5
+	#5 
 	write_address_4 = 4'b0011;
 	write_enable_4 = 1; 
 	write_data_4 = result;
