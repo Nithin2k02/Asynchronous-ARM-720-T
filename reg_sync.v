@@ -1,8 +1,29 @@
+`timescale 1ns / 1ps
+//////////////////////////////////////////////////////////////////////////////////
+// Company: 
+// Engineer: 
+// 
+// Create Date:    20:46:24 12/10/2022 
+// Design Name: 
+// Module Name:    reg_sync 
+// Project Name: 
+// Target Devices: 
+// Tool versions: 
+// Description: 
+//
+// Dependencies: 
+//
+// Revision: 
+// Revision 0.01 - File Created
+// Additional Comments: 
+//
+//////////////////////////////////////////////////////////////////////////////////
 module reg_sync(in_address_1,in_address_2,in_address_3,in_address_4, 
 						out_data_1,out_data_2,out_data_3,out_data_4, 
-						write_address_1, write_address_2, write_address_3, 
-						write_data_1, write_data_2, write_data_3, 
-						write_enable_1, write_enable_2, write_enable_3,
+						write_address_1, write_address_2, write_address_3, write_address_4,
+						write_data_1, write_data_2, write_data_3, write_data_4,
+						write_enable_1, write_enable_2, write_enable_3, write_enable_4,
+						read_enable_1, read_enable_2, read_enable_3, read_enable_4,
 						pc, pc_update, pc_write, 
 						cspr, cspr_write, cspr_update, clk );
 
@@ -27,12 +48,19 @@ input [3:0] write_address_2;
 input[N-1:0] write_data_2;
 input[3:0] write_address_3;
 input[N-1:0] write_data_3;
-
+input[3:0] write_address_4;
+input[N-1:0] write_data_4;
 
 input clk;
 input write_enable_1;
 input write_enable_2;
 input write_enable_3;
+input write_enable_4;
+
+input read_enable_1;
+input read_enable_2;
+input read_enable_3;
+input read_enable_4;
 
 //pc
 output reg [N-1:0]pc;
@@ -76,16 +104,28 @@ end
 
 
 always@(negedge clk) begin
-	out_data_1=R[in_address_1];
-	out_data_2=R[in_address_2];
-	out_data_3=R[in_address_3];
-	out_data_4=R[in_address_4];
+	if(read_enable_1 == 1 || read_enable_2 == 1 || read_enable_3 == 1 || read_enable_4 == 1) begin
+		#5
+		if (read_enable_1 == 1) 
+		out_data_1=R[in_address_1];
+		if (read_enable_2 == 1)
+		out_data_2=R[in_address_2];
+		if (read_enable_3 == 1)
+		out_data_3=R[in_address_3];
+		if (read_enable_4 == 1)
+		out_data_4=R[in_address_4];
+	end 
 
 	if(pc_write == 1) R[15] = pc_update;
 	if(cspr_write == 1) cspr = cspr_update;
-	if(write_enable_1 == 1) #5 R[write_address_1] = write_data_1;
-	if(write_enable_2 == 1) #5 R[write_address_2] = write_data_2;
-	if(write_enable_3 == 1) #5 R[write_address_3] = write_data_3;
+	
+	if(write_enable_1 == 1 || write_enable_2 == 1 || write_enable_3 == 1 || write_enable_4 == 1) begin
+		#5
+		if (write_enable_1 == 1) R[write_address_1] = write_data_1;
+		if (write_enable_2 == 1) R[write_address_2] = write_data_2;
+		if (write_enable_3 == 1) R[write_address_3] = write_data_3;
+		if (write_enable_4 == 1) R[write_address_4] = write_data_4;
+	end
 	
 end
 endmodule
