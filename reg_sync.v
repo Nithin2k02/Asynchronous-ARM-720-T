@@ -106,7 +106,7 @@ always@(negedge clk) begin
 	if(pc_write == 1) R[15] = pc_update;
 	if(cspr_write == 1) cspr = cspr_update;
 	
-	if(write_enable_1 == 1 || write_enable_2 == 1 || write_enable_3 == 1) begin
+	if(write_enable_1 == 1 || write_enable_2 == 1 || write_enable_3 == 1 || write_enable_4 == 1) begin
 		#5
 		if (write_enable_1 == 1) R[write_address_1] = write_data_1;
 		if (write_enable_2 == 1) R[write_address_2] = write_data_2;
