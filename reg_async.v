@@ -1,10 +1,11 @@
-module register_file(in_address_1,in_address_2,in_address_3,in_address_4, 
+module reg_async(in_address_1,in_address_2,in_address_3,in_address_4, 
 						out_data_1,out_data_2,out_data_3,out_data_4, 
 						write_address_1,write_data_1,write_enable_1,
 						write_address_2, write_data_2, write_enable_2,
-                        write_address_3, write_data_3, write_enable_3,
-						pc, pc_update, pc_write, 
-                        read_enable_1, read_enable_2, read_enable_3,
+                  write_address_3, write_data_3, write_enable_3,
+                  write_address_4, write_data_4, write_enable_4,
+						pc, pc_update, pc_write, read_enable_1, 
+						read_enable_2, read_enable_3, read_enable_4,
 						cspr, cspr_write, cspr_update, clk, req, ack);
 
 parameter N = 32;			 //register data size 
@@ -20,8 +21,11 @@ output reg [N-1:0]out_data_1;
 output reg [N-1:0]out_data_2;
 output reg [N-1:0]out_data_3;
 output reg [N-1:0]out_data_4;
-output reg req;
-output reg ack;
+output reg [3:0]req;
+output reg [3:0]ack;
+wire [N-1:0]Rs;
+wire [N-1:0]Rm;
+wire [N-1:0]result;
 
 //writing
 input [3:0]write_address_1;
@@ -30,18 +34,22 @@ input [3:0]write_address_2;
 input[N-1:0] write_data_2;
 input [3:0]write_address_3;
 input[N-1:0] write_data_3;
+input [3:0]write_address_4;
+input[N-1:0] write_data_4; 
 
 input clk;
 input write_enable_1;
 input write_enable_2;
 input write_enable_3;
+input write_enable_4;
 
 input read_enable_1;
 input read_enable_2;
 input read_enable_3;
+input read_enable_4;
 
 //pc
-output reg [N-1:0]pc;
+output reg [N-1:0]pc; 
 input pc_write;
 input[N-1:0] pc_update;
 
@@ -53,7 +61,7 @@ input[N-1:0] cspr_update;
 
 
 async_clk async_clk(.clk(clk), .req(req), .ack(ack));
- multiplier mult(.Rs(Rs), .Rm(Rm), .result(result));
+multiplier mult(.Rs(Rs), .Rm(Rm), .result(result));
 
 initial begin
 	cspr = 0;
@@ -73,46 +81,66 @@ initial begin
 	R[13] = 0;
 	R[14] = 0;
 	R[15] = 0;	
-        pc = 0;
-	req = 0;
-	ack = 0;
-end
+   pc = 0;
+	req = 4'b0000;
+	ack = 4'b0001;
+end 
 
 //always@(*) begin
 	//pc = R[2^3];
 //end
 
+
+
 always@(*)
 if(write_enable_1 == 1)
 begin
-#1 req = 1;
+#1 req[0] = 1;
+ack[0] = 0;
 end
-always@(*)
+always@(*) 
 if(write_enable_2 == 1)
 begin
-#1 req = 1;
+#1 req[1] = 1;
+ack[1] = 0;
 end
 always@(*)
 if(write_enable_3 == 1)
 begin
-#1 req = 1;
+#1 req[2] = 1;
+ack[2] = 0;
+end
+always@(*)
+if(write_enable_4 == 1)
+begin
+#1 req[3] = 1;
+ack[3] = 0;
 end
 
 
 always@(*)
 if(read_enable_1 == 1)
 begin
-#1 req = 1;
+#1 req[0] = 1;
+ack[0] = 0;
 end
 always@(*)
 if(read_enable_2 == 1)
 begin
-#1 req = 1;
+#1 req[1] = 1;
+ack[1] = 0;
 end
 always@(*)
 if(read_enable_3 == 1)
 begin
-#1 req = 1;
+#1 req[2] = 1;
+ack[2] = 0;
+end
+always@(*)
+if(read_enable_4 == 1)
+begin
+#1 req[3] = 1;
+ack[3] = 0;
 end
 
 //async_clk clk_1(.clk(clk), .req(req), .ack(ack));
@@ -123,24 +151,26 @@ always@(posedge clk) begin
 	#5
 	out_data_1=R[in_address_1];
 	#1 
-	 ack = 1;
-	 req = 0;
+	 ack[0] = 1;
+	 ack[1] = 1;
+	 req[0] = 0;
 	end
     if (read_enable_2==1)
 	begin
 	#5
 	out_data_2=R[in_address_2];
 	#1 
-	 ack = 1;
-	 req = 0;
+	 ack[1] = 1;
+	 ack[2] = 1;
+	 req[1] = 0;
 	end
     if (read_enable_3==1)
 	begin
 	#5
 	out_data_3=R[in_address_3];
 	#1 
-	 ack = 1;
-	 req = 0;
+	 ack[2] = 1;
+	 req[2] = 0;
 	end
 
 	// if(pc_write == 1) R[15] = pc_update;
@@ -148,29 +178,31 @@ always@(posedge clk) begin
 
 	// write data into reg when write_enable is set. After writing, acknowledge.
     // 6ns to acknowledge.
-    if (write_enable_1==1)
+   if (write_enable_1==1)
 	begin
 	#5
 	 R[write_address_1]=write_data_1;
 	#1 
-	 ack = 1;
-	 req = 0;
+	 ack[0] = 1;
+	 ack[1] = 1;
+	 req[0] = 0;
 	end
 	if (write_enable_2==1) 
 	begin
 	#5
 	R[write_address_2]=write_data_2;
 	#1
-	ack = 1;
-	req = 0;
+	ack[1] = 1;
+	ack[2] = 1;
+	req[1] = 0;
 	end
     if (write_enable_3==1) 
 	begin
 	#5
 	R[write_address_3]=write_data_3;
 	#1
-	ack = 1;
-	req = 0;
+	ack[2] = 1;
+	req[2] = 0;
 	end
 
 end
@@ -180,40 +212,46 @@ end
 always @(*)
 if(write_enable_1 == 0)
 begin
-ack = 0;
-req = 0;
+ack[0] = 0;
+req[0] = 0;
 end
 always @(*)
 if(write_enable_2 == 0)
 begin
-ack = 0;
-req = 0;
+ack[1] = 0;
+req[1] = 0;
 end
 always @(*)
 if(write_enable_3 == 0)
 begin
-ack = 0;
-req = 0;
+ack[2] = 0;
+req[2] = 0;
 end
 
 always @(*)
 if(read_enable_1 == 0)
 begin
-ack = 0;
-req = 0;
+ack[0] = 0;
+req[0] = 0;
 end
 always @(*)
 if(read_enable_2 == 0)
 begin
-ack = 0;
-req = 0;
+ack[1] = 0;
+req[1] = 0;
 end
 always @(*)
 if(read_enable_3 == 0)
 begin
-ack = 0;
-req = 0;
+ack[2] = 0;
+req[2] = 0;
 end
 
 
 endmodule
+
+//%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%//
+//%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%//
+
+
+
